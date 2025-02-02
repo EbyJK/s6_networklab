@@ -34,9 +34,38 @@ if(listen(sock,3)<0){
     exit(EXIT_FAILURE);
 
 }
-printf("receiver: connection established\n");
-while(1){
-    
+printf("receiver: waiting for connection\n");
+
+if((new_sock=accept(sock,(struct sockaddr*)&address,(socklen_t *)&addrlen))<0){
+    perror("accept failed");
+    close(sock);
+    exit(EXIT_FAILURE);
 }
 
+printf("receiver: connection established\n");
+
+while(1){
+    memset(buffer,0,BUFFER_SIZE);
+    read(new_sock,buffer,BUFFER_SIZE);
+    int received_frame=atoi(buffer);
+    printf("receiver: received frame %d\n",received_frame);
+
+    if(received_frame==expected_frame){
+        printf("receiver:sending acknowledgment for frame %d\n",received_frame);
+        sprintf(buffer,"ACK%d",received_frame);
+        expected_frame=1-expected_frame;
+
+    }else{
+        printf("Receiver:Duplicate frame %d.resending last acknowledgment\n",received_frame);
+        sprintf(buffer,"ACK%d",1-expected_frame);
+
+    }
+    send(new_Sock,buffer,strlen(buffer),0);
+
+
+
+}
+close(new_sock);
+close(sock);
+return 0;
 }
